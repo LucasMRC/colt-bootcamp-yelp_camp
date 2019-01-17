@@ -16,8 +16,8 @@ var bodyParser      = require('body-parser'),
 
 // APP CONFIG
 
-//mongoose.connect('mongodb://localhost:27017/yelp_camp', {useNewUrlParser: true});
-mongoose.connect('mongodb://lucasrc:yelpcamp00@ds117878.mlab.com:17878/yelp_camp', {useNewUrlParser: true});
+mongoose.connect(process.env.DATABASEURL, {useNewUrlParser: true});
+//mongoose.connect('mongodb://lucasrc:yelpcamp00@ds117878.mlab.com:17878/yelp_camp', {useNewUrlParser: true});
 app.use(bodyParser.urlencoded({extended: true}));
 app.set('view engine', 'ejs');
 app.use(express.static(__dirname + '/public'));
