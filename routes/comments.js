@@ -72,15 +72,11 @@ router.put('/:comment', middleware.checkCommentOwnership, function(req, res){
 
 // DESTROY COMMENT ROUTE
 
-router.delete('/:comment', middleware.checkCommentOwnership, function(req, res){
+router.delete('/ :comment', middleware.checkCommentOwnership, function(req, res){
     Comment.findByIdAndRemove(req.params.comment, function(err){
-       if (err) {
-           console.log(err);
-           res.redirect('back');
-       } else {
            req.flash("success", "Comment deleted");
            res.redirect('/campgrounds/' + req.params.id);
-       }
+
     });
 });
 

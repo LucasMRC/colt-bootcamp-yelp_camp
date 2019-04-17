@@ -7,37 +7,83 @@ var bodyParser      = require('body-parser'),
     seedDB          = require('./seeds'),
     flash           = require('connect-flash'),
     passport        = require('passport'),
-    LocalStrategy   = require('passport-local'),
+    LocalStrategy   = require('passport-local').Strategy,
+    MongoClient     = require('mongodb').MongoClient,
+    assert          = require('assert'),
     commentRoutes   = require('./routes/comments'),
     campgroundRoutes= require('./routes/campgrounds'),
     indexRoutes     = require('./routes/index'),
     express         = require('express'),
+    cookieParser    = require('cookie-parser'),
     app             = express();
 
 // APP CONFIG
-var url = process.env.DATABASEURL || "mongodb://localhost:27017/yelp_camp";
-
-mongoose.connect(url, {useNewUrlParser: true});
-app.use(bodyParser.urlencoded({extended: true}));
-app.set('view engine', 'ejs');
-app.use(express.static(__dirname + '/public'));
-app.use(methodOverride('_method'));
-app.use(flash());
 // seedDB();
 
 // PASSPORT CONF
 
+app.use(bodyParser.urlencoded({extended: true}));
+app.set('view engine', 'ejs');
+app.use(cookieParser());
+app.use(express.static(__dirname + '/public'));
+app.use(methodOverride('_method'));
+app.use(flash());
 app.use(require('express-session')({
-    secret: 'Estoy con los papas de lukitas',
-    resave: false,
-    saveUninitialized: false
+    secret: '<Estoy con los papas de lukitas>',
+    resave: true,
+    saveUninitialized: true
 }));
+
 app.use(passport.initialize());
 app.use(passport.session());
-passport.use(new LocalStrategy(User.authenticate()));
-passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());
 
+
+
+// Connection URL
+const url = 'mongodb://localhost:27017';
+
+// Database Name
+const dbName = 'yelp_camp';
+
+// Use connect method to connect to the server
+MongoClient.connect(url, function(err, client) {
+  assert.equal(null, err);
+  console.log("Connected successfully to server");
+
+  const db = client.db(dbName);
+
+  client.close();
+});
+//  ==========================================
+//            Passport Configurations
+//  ==========================================
+
+passport.use(
+    new LocalStrategy(function(username, password, done) {
+            User.findOne({ username: username }).then(function(user) {
+                if (!user || !user.authenticate(password)) {
+                    return done(null, false, { message: 'Incorrect email or password.' });
+                }
+
+                done(null, user);
+            });
+        }
+    )
+);
+
+passport.serializeUser(function(user, done) {
+    done(null, user.id);
+});
+
+passport.deserializeUser(function(id, done) {
+    User.findOne({ _id: id })
+        .then(function(user) {
+            done(null, user);
+        })
+        .catch(function(err) {
+            done(err, null);
+        });
+});
 // CHECK LOGGED USER & ROUTES
 
 app.use(function(req, res, next){
